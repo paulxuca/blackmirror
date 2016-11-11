@@ -1,0 +1,14 @@
+{
+  "name": "blackmirror",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "babel-plugin-transform-async-to-generator": "^6.16.0",
+    "babel-polyfill": "^6.16.0",
+    "babel-register": "^6.18.0",
+    "camo": "^0.12.3",
+    "facebook-chat-api": "^1.2.0",
+    "mongodb": "^2.2.11"
+  }
+}
