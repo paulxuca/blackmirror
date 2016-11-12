@@ -1,11 +1,13 @@
 const login = require('facebook-chat-api');
 const modules = require('./modules');
 const connect = require('camo').connect;
-const Thread = require('./Thread');
-const User = require('./User');
+const Thread = require('./models/Thread');
+const User = require('./models/User');
 const config = require('./config');
 const utils = require('./utils');
 const messages = require('./messages');
+
+const votingRegex = new RegExp(/\+\+\s?(.+)/);
 
 let api;
 let db;
@@ -34,23 +36,41 @@ async function initThread(threadID) {
   }
 }
 
+function handleThreadedVoting(messageData, currentSession, target, action) {
+  // First we resolve the target
+  const targetUserOrNull = utils.hasUser(target, currentSession);
+  if (targetUserOrNull) {
+    
+  }
+}
+
+function handleThreadMessage(messageData, currentSession) {
+  const { body } = messageData;
+  const target = body.match(votingRegex)[1];
+  const action = body.split(target)[0];
+  handleThreadedVoting(messageData, currentSession, target, action);
+}
+
 async function actionListenerHandler(messageData) {
   // First, check if it's a message thread we've seeen before
   let currentSession;
   let firstThread = false;
-  const hasBeen = await utils.isNewSession(messageData.threadID);
+  const { threadID } = messageData;
+
+  const hasBeen = await utils.isNewSession(threadID);
+  
   if (hasBeen) {
-    currentSession = await Thread.findOne({ id: messageData.threadID });
+    currentSession = await utils.getThread(threadID);
   } else {
     try {
       firstThread = true;
-      let currentSession = await initThread(messageData.threadID)
+      let currentSession = await initThread(threadID)
     } catch (saveError) {
       throw new Error(saveError);
     }
   }
-  if (firstThread) api.sendMessage(messages.general.initial, messageData.threadID);
-  api.sendMessage(messageData.body, messageData.threadID);
+  if (firstThread) api.sendMessage(messages.general.initial, threadID);
+  handleThreadMessage(messageData, currentSession);
 }
 
 function initListeners() {
